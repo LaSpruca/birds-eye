@@ -1,16 +1,18 @@
 [package]
-name = "bridseye-monitor"
+name = "birdseye-monitor"
 version = "0.1.0"
 edition = "2021"
-
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-rustls = "0.20"
-webpki-roots = "0.22"
+tokio-rustls = "0.23.4"
+webpki-roots = "0.22.3"
+rustls-pemfile = "1.0.0"
+
+tokio = { version = "1.18.1", features = ["net", "rt-multi-thread", "macros", "mio", "tokio-macros", "io-std", "io-util"] }
 tracing = "*"
 tracing-subscriber = { version = "*", features = ["env-filter"] }
 
 
-serde = {version = "*", features = ["derive"]}
+serde = { version = "*", features = ["derive"] }
 toml = "*"

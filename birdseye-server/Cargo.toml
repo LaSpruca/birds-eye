@@ -1,5 +1,5 @@
 [package]
-name = "bridseye-server"
+name = "birdseye-server"
 version = "0.1.0"
 edition = "2021"
 
