@@ -1,8 +1,6 @@
-[patch.crates-io]
-rustls = { git = "https://github.com/rustls/rustls", rev = "093e88e" }
-
 [workspace]
 members = [
     "birdseye-monitor",
-    "birdseye-server"
+    "birdseye-server",
+    "birdseye-common"
 ]

@@ -11,7 +11,7 @@ use tokio_rustls::{
     rustls::{self, Certificate, OwnedTrustAnchor},
     TlsConnector,
 };
-use tracing::{error, info, warn};
+use tracing::{debug, error, info, warn};
 
 #[tokio::main]
 async fn main() -> io::Result<()> {
@@ -40,13 +40,19 @@ async fn main() -> io::Result<()> {
                 exit(1);
             }
         };
-    let domain = app_config.server.host;
+    let domain = app_config
+        .server
+        .domain
+        .unwrap_or_else(|| app_config.server.host.clone());
+
     let content = format!("GET / HTTP/1.0\r\nHost: {}\r\n\r\n", domain);
 
     let mut root_cert_store = rustls::RootCertStore::empty();
 
     // Load the specified certificate
     if let Some(path) = app_config.ca_cert {
+        info!("Loading certificate {}", path.display());
+
         match File::open(&path) {
             Ok(val) => match rustls_pemfile::certs(&mut BufReader::new(val)) {
                 Ok(val) => {
@@ -95,8 +101,17 @@ async fn main() -> io::Result<()> {
 
     let (mut stdin, mut stdout) = (tokio_stdin(), tokio_stdout());
 
-    let domain = rustls::ServerName::try_from(domain.as_str())
-        .map_err(|_| io::Error::new(io::ErrorKind::InvalidInput, "invalid dnsname"))?;
+    debug!("Using domain {domain}");
+
+    let domain = match rustls::ServerName::try_from(domain.as_str())
+        .map_err(|_| io::Error::new(io::ErrorKind::InvalidInput, "invalid dnsname"))
+    {
+        Ok(val) => val,
+        Err(err) => {
+            error!("Error parsing server name {err}");
+            exit(1);
+        }
+    };
 
     let mut stream = match connector.connect(domain, stream).await {
         Ok(val) => val,
@@ -114,16 +129,6 @@ async fn main() -> io::Result<()> {
     };
 
     let (mut reader, mut writer) = split(stream);
-
-    tokio::select! {
-        ret = copy(&mut reader, &mut stdout) => {
-            ret?;
-        },
-        ret = copy(&mut stdin, &mut writer) => {
-            ret?;
-            writer.shutdown().await?
-        }
-    }
 
     Ok(())
 }
