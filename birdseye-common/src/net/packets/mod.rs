@@ -1,4 +1,5 @@
 mod error;
+mod util;
 
 use byteorder::{LittleEndian, ReadBytesExt};
 use error::{Error, ParsePacketResult};
@@ -14,7 +15,7 @@ type PC = Cursor<Vec<u8>>;
 /// # Packet structure (KV Pair)
 /// Each packet uses the following layout to encode information
 /// - `key`: \[u8; 2\] - The two letter key of the field, i.e. ID.
-/// - `type`: u8 - The type id of the data contained in the structure
+/// - `type`: u16 - The type id of the data contained in the structure
 /// - `size`: u32 - The number of bytes in the value section, only used for dynamic sized types
 /// - `value`: \[u8; `size`\] - The content of that field
 ///
@@ -35,11 +36,13 @@ type PC = Cursor<Vec<u8>>;
 /// - `8` - i64
 /// - `9` - u128
 /// - `10` - i128
+/// - `11` - f32
+/// - `12` - f64
 /// ## Dynamic sized types
 /// - `11` - String
 /// - `12` - KV Pair
 /// - `13` - Array
-/// - `14` - RGB value (\[u8; 3\])
+/// - `14` - GZipped Array of groups of 3 bytes (r,g,b)
 pub struct Packet {
     /// The id of the packet
     id: u32,
@@ -49,56 +52,42 @@ pub struct Packet {
 
 impl Packet {
     pub fn from_bytes(bytes: Vec<u8>) -> ParsePacketResult<Self> {
-        let bytes = bytes.clone();
-
-        // Check that there is actually some data in the packet (minimum size of id field)
-        if byte_len < 10 {
-            return Err(Error::TooSmallPacket);
-        }
-
-        let mut fields = HashMap::new();
-
-        // Get a cursor to read the data
-        let mut cursor = bytes;
-
-        // Loop until all da bytes are read
-        while !bytes.is_empty() {
-            // Read the name of the field
-            let name = {
-                let mut temp = [0; 2];
-                match cursor.i(&mut temp) {
-                    Ok(_) => {}
-                    Err(err) => return Err(Error::ErrorReadingName(err)),
-                };
-
-                match String::from_utf8(temp.to_vec()) {
-                    Ok(val) => val.to_uppercase(),
-                    Err(err) => return Err(Error::ErrorParsingName(err)),
-                }
-            };
-
-            // Read the field type
-            let field_type = match cursor.read_u32::<LittleEndian>() {
-                Ok(val) => val,
-                Err(err) => return Err(Error::ErrorReadingName(err)),
-            } as usize;
-
-            let size = match cursor.read_u32::<LittleEndian>() {
-                Ok(val) => val,
-                Err(err) => return Err(Error::ErrorReadingName(err)),
-            } as usize;
-
-            let data = {
-                let mut temp = Vec::with_capacity(size);
-                match cursor.read_exact(temp.as_mut_slice()) {
-                    Ok(_) => {}
-                    Err(err) => return Err(Error::ErrorReadingContentNamed(name, err)),
-                };
-                temp
-            };
-
-            fields.insert(name, data);
-        }
+        // let mut bytes = bytes.clone();
+        //
+        // // Check that there is actually some data in the packet (minimum size of id field)
+        // if bytes.len() < 10 {
+        //     return Err(Error::TooSmallPacket);
+        // }
+        //
+        // let mut fields = HashMap::new();
+        //
+        // // Loop until all da bytes are read
+        // while !bytes.is_empty() {
+        //     // Read the name of the field
+        //     let name = read_str(2, &mut bytes);
+        //
+        //     // Read the field type
+        //     let field_type = match cursor.read_u32::<LittleEndian>() {
+        //         Ok(val) => val,
+        //         Err(err) => return Err(Error::ErrorReadingName(err)),
+        //     } as usize;
+        //
+        //     let size = match cursor.read_u32::<LittleEndian>() {
+        //         Ok(val) => val,
+        //         Err(err) => return Err(Error::ErrorReadingName(err)),
+        //     } as usize;
+        //
+        //     let data = {
+        //         let mut temp = Vec::with_capacity(size);
+        //         match cursor.read_exact(temp.as_mut_slice()) {
+        //             Ok(_) => {}
+        //             Err(err) => return Err(Error::ErrorReadingContentNamed(name, err)),
+        //         };
+        //         temp
+        //     };
+        //
+        //     fields.insert(name, data);
+        // }
 
         todo!()
     }

@@ -20,15 +20,24 @@ pub enum Error {
     #[error("Could not parse name for incoming packet: {0}")]
     ErrorParsingName(FromUtf8Error),
 
-    #[error("Could not read the content for the a field in the incoming packet: {1}")]
+    #[error("Could not read the content for the a field in the incoming packet: {0}")]
     ErrorReadingContent(std::io::Error),
 
     #[error("Could not read the content for the field {0} in the incoming packet: {1}")]
     ErrorReadingContentNamed(String, std::io::Error),
 
-    #[error("Could not read the content for the a field in the incoming packet: {1}")]
+    #[error("Could not read the content for the a field in the incoming packet: {0}")]
     InvalidString(FromUtf8Error),
 
     #[error("Could not read the content for the field {0} in the incoming packet: {1}")]
     InvalidStringNamed(String, FromUtf8Error),
+
+    #[error("Could not read the content for the a field in the incoming packet: {0}")]
+    UnableToDecompress(std::io::Error),
+}
+
+impl From<FromUtf8Error> for Error {
+    fn from(err: FromUtf8Error) -> Self {
+        Self::InvalidString(err)
+    }
 }

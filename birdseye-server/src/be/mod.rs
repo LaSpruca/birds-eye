@@ -1,3 +1,5 @@
+mod client;
+
 use crate::config::ServerConfig;
 use rustls_pemfile::{certs, rsa_private_keys};
 use std::fs::File;
