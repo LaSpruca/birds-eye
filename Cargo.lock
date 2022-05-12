@@ -49,6 +49,7 @@ dependencies = [
 name = "birdseye-server"
 version = "0.1.0"
 dependencies = [
+ "birdseye-common",
  "rustls-pemfile",
  "serde",
  "tokio",

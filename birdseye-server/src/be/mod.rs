@@ -9,25 +9,24 @@ use tokio::io::{copy, sink, split, AsyncWriteExt};
 use tokio::net::TcpListener;
 use tokio_rustls::rustls::{self, Certificate, PrivateKey};
 use tokio_rustls::TlsAcceptor;
-use tracing::{error, info};
+use tracing::{debug, error, info};
 
 fn load_certs(path: &Path) -> io::Result<Vec<Certificate>> {
-    info!("Loading certs from {}", path.display());
+    debug!("Loading certificate from {}", path.display());
     certs(&mut BufReader::new(File::open(path)?))
         .map_err(|_| io::Error::new(io::ErrorKind::InvalidInput, "invalid cert"))
         .map(|mut certs| certs.drain(..).map(Certificate).collect())
 }
 
 fn load_keys(path: &Path) -> io::Result<Vec<PrivateKey>> {
-    info!("Loading certs from {}", path.display());
-
+    debug!("Loading key from {}", path.display());
     rsa_private_keys(&mut BufReader::new(File::open(path)?))
         .map_err(|_| io::Error::new(io::ErrorKind::InvalidInput, "invalid key"))
         .map(|mut keys| keys.drain(..).map(PrivateKey).collect())
 }
 
-pub async fn run(config: &ServerConfig) -> io::Result<()> {
-    let addr = match (config.host.as_str(), config.port).to_socket_addrs() {
+pub async fn run(opts: &ServerConfig) -> io::Result<()> {
+    let addr = match (opts.host.as_str(), opts.port).to_socket_addrs() {
         Ok(val) => val,
         Err(err) => {
             error!("Error getting socket address: {err}");
@@ -37,11 +36,11 @@ pub async fn run(config: &ServerConfig) -> io::Result<()> {
     .next()
     .ok_or_else(|| io::Error::from(io::ErrorKind::AddrNotAvailable))?;
 
-    let certs = load_certs(&config.cert)?;
-    let mut keys = load_keys(&config.key)?;
+    let certs = load_certs(&opts.cert)?;
+    let mut keys = load_keys(&opts.key)?;
 
-    info!("Certs {certs:?}");
-    info!("Keys {keys:?}");
+    debug!("Certs {certs:?}");
+    debug!("Keys {keys:?}");
 
     let config = rustls::ServerConfig::builder()
         .with_safe_defaults()
@@ -51,6 +50,8 @@ pub async fn run(config: &ServerConfig) -> io::Result<()> {
     let acceptor = TlsAcceptor::from(Arc::new(config));
 
     let listener = TcpListener::bind(&addr).await?;
+
+    info!("Started BE server on {}:{}", opts.host, opts.port);
 
     loop {
         let (stream, peer_addr) = listener.accept().await?;

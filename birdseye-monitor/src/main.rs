@@ -91,6 +91,7 @@ async fn main() -> io::Result<()> {
         .with_no_client_auth(); // i guess this was previously the default?
     let connector = TlsConnector::from(Arc::new(config));
 
+    info!("Connecting to {}:{}", app_config.server.host, app_config.server.port);
     let stream = match TcpStream::connect(&addr).await {
         Ok(val) => val,
         Err(err) => {
@@ -98,8 +99,6 @@ async fn main() -> io::Result<()> {
             exit(1);
         }
     };
-
-    let (mut stdin, mut stdout) = (tokio_stdin(), tokio_stdout());
 
     debug!("Using domain {domain}");
 
