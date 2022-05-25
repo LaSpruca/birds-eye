@@ -1,6 +1,14 @@
 use crate::net::packets::error::{Error, ParsePacketResult};
+use crate::net::packets::{error, FieldData};
+use std::collections::HashMap;
 use std::f64;
 use std::io::{Cursor, Read};
+use tracing::debug;
+
+const SIZED_TYPES: [bool; 17] = [
+    true, true, true, true, true, true, true, true, true, true, true, true, true, false, false,
+    false, false,
+];
 
 /// Reads the next `n` bytes from `buf`
 fn read_n(n: u32, buf: &mut Vec<u8>) -> ParsePacketResult<Vec<u8>> {
@@ -184,9 +192,74 @@ pub fn read_rgb(n: u32, buf: &mut Vec<u8>) -> ParsePacketResult<Vec<(u8, u8, u8)
     Ok(values)
 }
 
+/// Read next dynamic array of bytes
+pub fn read_arr_dyn(n: u32, buf: &mut Vec<u8>) -> ParsePacketResult<Vec<Vec<u8>>> {
+    let mut bytes = read_n(n, buf)?;
+    let mut array = vec![];
+
+    while !bytes.is_empty() {
+        let size = read_u32(&mut bytes)?;
+        let data = read_n(size, &mut bytes)?;
+        array.push(data);
+    }
+
+    Ok(array)
+}
+
+/// Read next `n` bytes of buffer as array with element size `n`
+pub fn read_arr_fixed(n: u32, sz: u32, buf: &mut Vec<u8>) -> ParsePacketResult<Vec<Vec<u8>>> {
+    let mut bytes = read_n(n, buf)?;
+    let mut array = vec![];
+
+    while !bytes.is_empty() {
+        let data = read_n(sz, &mut bytes)?;
+        array.push(data);
+    }
+
+    Ok(array)
+}
+
+pub fn read_kv_pair(n: u32, buf: &mut Vec<u8>) -> ParsePacketResult<HashMap<String, FieldData>> {
+    let mut bytes = read_n(n, buf)?;
+    while !bytes.is_empty() {
+        let name = read_str(2, &mut bytes)?;
+
+        let field_type = error::name(&name, read_u16(&mut bytes))?;
+        let field_data = match field_type {
+            0 => FieldData::Bool(error::name(&name, read_bool(&mut bytes))?),
+            1 => FieldData::U8(error::name(&name, read_n(1, &mut bytes))?[0]),
+            2 => FieldData::I8(error::name(&name, read_i8(&mut bytes))?),
+            3 => FieldData::U16(error::name(&name, read_u16(&mut bytes))?),
+            4 => FieldData::I16(error::name(&name, read_i16(&mut bytes))?),
+            5 => FieldData::U32(error::name(&name, read_u32(&mut bytes))?),
+            6 => FieldData::I32(error::name(&name, read_i32(&mut bytes))?),
+            7 => FieldData::U64(error::name(&name, read_u64(&mut bytes))?),
+            8 => FieldData::I64(error::name(&name, read_i64(&mut bytes))?),
+            9 => FieldData::U128(error::name(&name, read_u128(&mut bytes))?),
+            10 => FieldData::I128(error::name(&name, read_i128(&mut bytes))?),
+            11 => FieldData::F32(error::name(&name, read_f32(&mut bytes))?),
+            12 => FieldData::F64(error::name(&name, read_f64(&mut bytes))?),
+            13 => {
+                let size = error::name(&name, read_u32(&mut bytes))?;
+                FieldData::String(error::name(&name, read_str(size, &mut bytes))?)
+            }
+            // - `14` - KV Pair
+            // - `15` - Array
+            // 16 => {
+            //     let size = error::name(&name, read_u32(&mut bytes))?;
+            //     FieldData::Rgb(error::name(&name, read_rgb(size, &mut bytes))?)
+            // }
+            _ => return Err(Error::InvalidFieldType(name, field_type)),
+        };
+    }
+
+    todo!()
+}
+
 #[cfg(test)]
 mod test {
     use super::*;
+    use std::io::Write;
     #[test]
     fn test_read_n() {
         let mut buf = vec![0, 1, 2, 3, 4, 5];
@@ -202,5 +275,36 @@ mod test {
         let str = read_str(5, &mut buf).unwrap();
         assert_eq!(String::from("Hello"), str);
         assert_eq!(String::from(" world").as_bytes().to_vec(), buf);
+    }
+
+    #[test]
+    fn test_read_bool() {
+        let mut buf: Vec<u8> = vec![1, 0];
+        let val_true = read_bool(&mut buf).unwrap();
+
+        assert_eq!(vec![0], buf);
+        assert_eq!(true, val_true);
+
+        let val_false = read_bool(&mut buf).unwrap();
+        assert_eq!(Vec::<u8>::new(), buf);
+        assert_eq!(false, val_false);
+    }
+
+    #[test]
+    fn test_read_dyn_arr() {
+        let mut buf = vec![2, 0, 0, 0, 1, 2, 3, 0, 0, 0, 1, 2, 3, 6];
+        let val = read_arr_dyn(13, &mut buf).unwrap();
+
+        assert_eq!(vec![6], buf);
+        assert_eq!(vec![vec![1, 2], vec![1, 2, 3]], val);
+    }
+
+    #[test]
+    fn test_read_fixed_arr() {
+        let mut buf = vec![12, 3, 6, 2];
+        let val = read_arr_fixed(4, 2, &mut buf).unwrap();
+
+        assert_eq!(Vec::<u8>::new(), buf);
+        assert_eq!(vec![vec![12, 3], vec![6, 2]], val);
     }
 }

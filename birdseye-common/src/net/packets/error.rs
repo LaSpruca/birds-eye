@@ -34,10 +34,21 @@ pub enum Error {
 
     #[error("Could not read the content for the a field in the incoming packet: {0}")]
     UnableToDecompress(std::io::Error),
+
+    #[error("Could not read the content for the a field in the incoming packet: {0}")]
+    InvalidFieldType(String, u16),
 }
 
 impl From<FromUtf8Error> for Error {
     fn from(err: FromUtf8Error) -> Self {
         Self::InvalidString(err)
     }
+}
+
+pub fn name<T>(name: &str, result: ParsePacketResult<T>) -> ParsePacketResult<T> {
+    result.map_err(|f| match f {
+        Error::ErrorReadingContent(err) => Error::ErrorReadingContentNamed(name.to_string(), err),
+        Error::InvalidString(err) => Error::InvalidStringNamed(name.to_string(), err),
+        _ => f,
+    })
 }

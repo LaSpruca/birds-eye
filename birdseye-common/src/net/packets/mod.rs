@@ -1,5 +1,5 @@
+mod desereialize;
 mod error;
-mod util;
 
 use byteorder::{LittleEndian, ReadBytesExt};
 use error::{Error, ParsePacketResult};
@@ -39,10 +39,10 @@ type PC = Cursor<Vec<u8>>;
 /// - `11` - f32
 /// - `12` - f64
 /// ## Dynamic sized types
-/// - `11` - String
-/// - `12` - KV Pair
-/// - `13` - Array
-/// - `14` - GZipped Array of groups of 3 bytes (r,g,b)
+/// - `13` - String
+/// - `14` - KV Pair
+/// - `15` - Array
+/// - `16` - GZipped Array of groups of 3 bytes (r,g,b)
 pub struct Packet {
     /// The id of the packet
     id: u32,
@@ -98,6 +98,7 @@ pub enum FieldData {
     Array(Vec<FieldData>),
     KVPair(HashMap<String, FieldData>),
     Rgb([u8; 3]),
+    Bool(bool),
     U8(u8),
     I8(i8),
     U16(u16),
@@ -106,4 +107,8 @@ pub enum FieldData {
     I32(i32),
     U64(u64),
     I64(i64),
+    U128(u128),
+    I128(i128),
+    F32(f32),
+    F64(f64),
 }
