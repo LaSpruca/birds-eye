@@ -1,6 +1,7 @@
 mod client;
 mod config;
 
+use crate::client::current_user::get_current_user;
 use crate::client::process::monitor_processes;
 use crate::config::load_config;
 use sysinfo::SystemExt;
@@ -17,7 +18,8 @@ async fn main() {
 
     let mut stream = monitor_processes();
 
-    info!("Listing users");
+    info!("Current user is: {:?}", get_current_user());
+
     for usr in sysinfo::System::default().users() {
         info!("{:?}", usr);
     }

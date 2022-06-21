@@ -16,5 +16,6 @@ toml = "*"
 
 sysinfo = "0.24.5"
 users = "0.11.0"
+walkdir = "2.3.2"
 
 futures = "0.3.21"
