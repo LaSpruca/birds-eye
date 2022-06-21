@@ -36,7 +36,7 @@ pub fn load_config() -> Config {
     if use_env {
         Config::from_env();
     } else {
-        let path = if let Ok(pth) = var("CONFIG_PATH") {
+        let path = if let Ok(pth) = var("CONFIG_FILE") {
             pth
         } else {
             "config.toml".into()
@@ -52,7 +52,10 @@ pub fn load_config() -> Config {
                 }
             },
             Err(err) => {
-                warn!("Could not read config file {err}, using defaults");
+                warn!(
+                    "Could not read config from path {}: {err}, using defaults",
+                    path
+                );
             }
         }
     }

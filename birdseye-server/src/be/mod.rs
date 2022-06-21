@@ -1,79 +1,25 @@
-mod client;
-
-use crate::config::ServerConfig;
-use rustls_pemfile::{certs, rsa_private_keys};
-use std::fs::File;
-use std::io::{self, BufReader};
-use std::net::ToSocketAddrs;
-use std::path::{Path, PathBuf};
+use birdseye_common::rpc::be::{self, JoinRequest, JoinResponse};
+use hyper::http::request;
 use std::sync::Arc;
-use tokio::io::{copy, sink, split, AsyncWriteExt};
-use tokio::net::TcpListener;
-use tokio_rustls::rustls::{self, Certificate, PrivateKey};
-use tokio_rustls::TlsAcceptor;
-use tracing::{debug, error, info};
+use tokio::sync::RwLock;
+use tonic::{Request, Response, Status};
 
-fn load_certs(path: &Path) -> io::Result<Vec<Certificate>> {
-    debug!("Loading certificate from {}", path.display());
-    certs(&mut BufReader::new(File::open(path)?))
-        .map_err(|_| io::Error::new(io::ErrorKind::InvalidInput, "invalid cert"))
-        .map(|mut certs| certs.drain(..).map(Certificate).collect())
+pub mod tui;
+
+pub struct BirdsEyeService {
+    tokens: Arc<RwLock<Vec<String>>>,
 }
 
-fn load_keys(path: &Path) -> io::Result<Vec<PrivateKey>> {
-    debug!("Loading key from {}", path.display());
-    rsa_private_keys(&mut BufReader::new(File::open(path)?))
-        .map_err(|_| io::Error::new(io::ErrorKind::InvalidInput, "invalid key"))
-        .map(|mut keys| keys.drain(..).map(PrivateKey).collect())
-}
+#[tonic::async_trait]
+impl be::birds_eye_server::BirdsEye for BirdsEyeService {
+    async fn join(&self, req: Request<JoinRequest>) -> Result<Response<JoinResponse>, Status> {
+        let request = req.get_ref();
+        let lock = self.tokens.read().await;
 
-pub async fn run(opts: &ServerConfig) -> io::Result<()> {
-    let addr = match (opts.host.as_str(), opts.port).to_socket_addrs() {
-        Ok(val) => val,
-        Err(err) => {
-            error!("Error getting socket address: {err}");
-            return Err(err);
+        if lock.contains(&request.token) {
+            Ok(Response::new(JoinResponse {}))
+        } else {
+            Err(Status::unauthenticated("The token provided is invalid"))
         }
-    }
-    .next()
-    .ok_or_else(|| io::Error::from(io::ErrorKind::AddrNotAvailable))?;
-
-    let certs = load_certs(&opts.cert)?;
-    let mut keys = load_keys(&opts.key)?;
-
-    debug!("Certs {certs:?}");
-    debug!("Keys {keys:?}");
-
-    let config = rustls::ServerConfig::builder()
-        .with_safe_defaults()
-        .with_no_client_auth()
-        .with_single_cert(certs, keys.remove(0))
-        .map_err(|err| io::Error::new(io::ErrorKind::InvalidInput, err))?;
-    let acceptor = TlsAcceptor::from(Arc::new(config));
-
-    let listener = TcpListener::bind(&addr).await?;
-
-    info!("Started BE server on {}:{}", opts.host, opts.port);
-
-    loop {
-        let (stream, peer_addr) = listener.accept().await?;
-        let acceptor = acceptor.clone();
-
-        let fut = async move {
-            let mut stream = acceptor.accept(stream).await?;
-
-            let (mut reader, mut writer) = split(stream);
-            let n = copy(&mut reader, &mut writer).await?;
-            writer.flush().await?;
-            println!("Echo: {} - {}", peer_addr, n);
-
-            Ok(()) as io::Result<()>
-        };
-
-        tokio::spawn(async move {
-            if let Err(err) = fut.await {
-                eprintln!("{:?}", err);
-            }
-        });
     }
 }

@@ -45,7 +45,7 @@ pub fn load_config() -> Config {
     if use_env {
         Config::from_env();
     } else {
-        let path = if let Ok(pth) = var("CONFIG_PATH") {
+        let path = if let Ok(pth) = var("CONFIG_FILE") {
             pth
         } else {
             "config.toml".into()
