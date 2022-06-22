@@ -1,9 +1,7 @@
-use futures::{stream, StreamExt};
 use serde::Serialize;
 use std::collections::HashMap;
-use sysinfo::{Pid, PidExt, ProcessExt, System, SystemExt, UserExt};
+use sysinfo::{PidExt, ProcessExt, System, SystemExt, UserExt};
 use tokio::sync::mpsc;
-use tracing::debug;
 
 /// Serializable process struct to describe process used inside of crate
 #[derive(Clone, Serialize, Debug)]

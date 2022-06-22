@@ -1,8 +1,9 @@
 mod client;
 mod config;
+mod platform;
 
-use crate::client::current_user::get_current_user;
 use crate::client::process::monitor_processes;
+use crate::platform::get_current_user;
 use crate::config::load_config;
 use sysinfo::SystemExt;
 use tracing::info;

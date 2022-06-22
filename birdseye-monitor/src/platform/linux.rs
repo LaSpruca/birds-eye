@@ -1,16 +1,12 @@
 use std::collections::HashMap;
+use serde::Serialize;
 use tracing::debug;
-use users::{get_user_by_uid, User};
 use walkdir::WalkDir;
-
-#[cfg(target_os = "windows")]
-fn monitor_current_user() {}
+use sysinfo::{System, SystemExt, UserExt};
+use std::os::unix::prelude::*;
 
 /// Black magic fuckery to find the current GUI user in linux
-#[cfg(target_os = "linux")]
 pub fn get_current_user() -> Option<User> {
-    use std::os::unix::prelude::*;
-
     // Find all the files in the /dev/pts dir, idk, who and finger mentioned them when say which
     // user was logged in where so ¯\_(ツ)_/¯, it seems to work
     let pts = WalkDir::new("/dev/pts");
@@ -34,10 +30,7 @@ pub fn get_current_user() -> Option<User> {
     users.sort_by(|a, b| a.1.cmp(b.1));
 
     // Return it 👍
-    get_user_by_uid(*users.last()?.0)
-}
-
-#[cfg(target_os = "mac_os")]
-pub fn get_current_user() -> Option<User> {
-    todo!("fuck you mac user.");
+    let mut sys = System::default();
+    sys.refresh_users_list();
+    sys.get_user_by_id(*users.last()?.0.into()).map(User::from)
 }
