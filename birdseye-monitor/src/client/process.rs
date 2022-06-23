@@ -1,31 +1,18 @@
-use serde::Serialize;
+use birdseye_common::{Process, User};
 use std::collections::HashMap;
 use sysinfo::{PidExt, ProcessExt, System, SystemExt, UserExt};
 use tokio::sync::mpsc;
 
-/// Serializable process struct to describe process used inside of crate
-#[derive(Clone, Serialize, Debug)]
-pub struct Process {
-    pid: u32,
-    name: String,
-    user: String,
-}
+/// Function to convert sysinfo process to my process
+fn sysinfo_to_be_process(process: &sysinfo::Process, sys: &System) -> Process {
+    // Get the current user
+    let usr = process
+        .user_id()
+        .map(|id| sys.get_user_by_id(id).map(|user| user.name()).unwrap_or(id))
+        .unwrap_or_else(|| "Unknown user");
 
-impl From<(&sysinfo::Process, &sysinfo::System)> for Process {
-    fn from((info, sys): (&sysinfo::Process, &sysinfo::System)) -> Self {
-        Self {
-            name: info.name().to_string(),
-            pid: info.pid().as_u32(),
-            user: info
-                .user_id()
-                .map(|uid| {
-                    sys.get_user_by_id(uid)
-                        .map(|f| f.name().to_string())
-                        .unwrap_or_else(|| uid.to_string())
-                })
-                .unwrap_or_else(|| "No username".to_string()),
-        }
-    }
+    // Convert sysinfo's process to my process
+    Process::new(process.pid().as_u32(), process.name(), &User::new(usr))
 }
 
 /// Struct to represent weather or not a process has started or stopped
@@ -34,15 +21,6 @@ impl From<(&sysinfo::Process, &sysinfo::System)> for Process {
 pub enum ProcessStatus {
     Start(Process),
     Stop(Process),
-}
-
-impl ProcessStatus {
-    pub fn process(&self) -> &Process {
-        match self {
-            Self::Stop(a) => a,
-            Self::Start(a) => a,
-        }
-    }
 }
 
 /// Start a process to monitor the running processes on the system and notify over a tokio mpsc channel
@@ -60,14 +38,13 @@ pub fn monitor_processes() -> mpsc::Receiver<ProcessStatus> {
 
             let running_processes = sys.processes();
             let processes2 = processes.clone();
-
+            
             // Find all process that have just started, store them and report back to system
             for (pid, process) in running_processes
                 .iter()
                 .filter(|(key, _)| !processes2.contains_key(*key))
             {
-                // Convert sysinfo's process to my process
-                let process = Process::from((process, &sys));
+                let process = sysinfo_to_be_process(process, &sys);
 
                 // Record information and send result
                 processes.insert(*pid, process.clone());
@@ -91,11 +68,15 @@ pub fn monitor_processes() -> mpsc::Receiver<ProcessStatus> {
     rx
 }
 
+
+/// Get all the processes running on the current system
+#[allow(dead_code)]
 pub fn get_all_processes() -> Vec<Process> {
     let mut sys = System::default();
     sys.refresh_processes();
+    sys.refresh_users_list();
     sys.processes()
         .iter()
-        .map(|(_, x)| Process::from((x, &sys)))
+        .map(|(_, x)| sysinfo_to_be_process(x, &sys))
         .collect()
 }

@@ -15,7 +15,7 @@ async fn main() {
         .init();
 
     // Load application configuration
-    let config = load_config();
+    let _config = load_config();
 
     let mut stream = monitor_processes();
 

@@ -1,7 +1,7 @@
 mod config;
 
 use crate::config::load_config;
-use tracing::{error, info};
+use tracing::{info};
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {

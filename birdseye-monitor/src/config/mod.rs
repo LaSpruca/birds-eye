@@ -5,7 +5,7 @@ use serde::{Deserialize, Serialize};
 use std::env::args;
 use std::fs::read_to_string;
 use std::{env::var, path::PathBuf};
-use tracing::{error, warn};
+use tracing::{warn};
 
 /// Configuration for the monitor application
 ///

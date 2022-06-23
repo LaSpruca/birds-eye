@@ -2,7 +2,6 @@
 
 use serde::{Deserialize, Serialize};
 use std::env::var;
-use std::path::PathBuf;
 use tracing::warn;
 
 /// Configuration for the Birds Eye birdseye-server
