@@ -8,7 +8,11 @@ fn sysinfo_to_be_process(process: &sysinfo::Process, sys: &System) -> Process {
     // Get the current user
     let usr = process
         .user_id()
-        .map(|id| sys.get_user_by_id(id).map(|user| user.name()).unwrap_or(id))
+        .map(|id| {
+            sys.get_user_by_id(id)
+                .map(|user| user.name())
+                .unwrap_or("Unknown user")
+        })
         .unwrap_or_else(|| "Unknown user");
 
     // Convert sysinfo's process to my process
@@ -38,7 +42,7 @@ pub fn monitor_processes() -> mpsc::Receiver<ProcessStatus> {
 
             let running_processes = sys.processes();
             let processes2 = processes.clone();
-            
+
             // Find all process that have just started, store them and report back to system
             for (pid, process) in running_processes
                 .iter()
@@ -67,7 +71,6 @@ pub fn monitor_processes() -> mpsc::Receiver<ProcessStatus> {
 
     rx
 }
-
 
 /// Get all the processes running on the current system
 #[allow(dead_code)]

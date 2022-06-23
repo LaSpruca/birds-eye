@@ -5,7 +5,7 @@ mod windows;
 pub use windows::*;
 
 // Use linux specific implemetaions if building for linux
-#[cfg(linux)]
+#[cfg(target_os = "linux")]
 mod linux;
-#[cfg(linux)]
+#[cfg(target_os = "linux")]
 pub use linux::*;

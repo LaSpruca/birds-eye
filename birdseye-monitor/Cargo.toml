@@ -19,7 +19,7 @@ walkdir = "2.3.2"
 
 futures = "0.3.21"
 
-['target.cfg(linux).dependencies']
+[target.'cfg(target_os="linux")'.dependencies]
 users = "0.11.0"
 
 [target.'cfg(windows)'.dependencies]
