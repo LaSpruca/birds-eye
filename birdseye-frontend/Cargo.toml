@@ -1,0 +1,21 @@
+[package]
+name = "birdseye-frontend"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+wasm-bindgen-futures = "0.4.31"
+yew = "^0.19"
+yew-router = "0.16"
+wasm-logger = "0.2.0"
+log = "0.4.17"
+gloo = "0.8.0"
+futures = "0.3.21"
+wasm-bindgen = "0.2.81"
+wee_alloc = "0.4.5"
+
+[dependencies.web-sys]
+version = "0.3.22"
+features = ["Event", "EventTarget"]

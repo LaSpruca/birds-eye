@@ -8,10 +8,13 @@ edition = "2021"
 [dependencies]
 tokio = { version = "1.0", features = ["macros", "rt-multi-thread", "net"] }
 
-tracing = "*"
-tracing-subscriber = { version = "*", features = ["env-filter"] }
+tracing = "0.1.35"
+tracing-subscriber = { version = "0.3.14", features = ["env-filter"] }
 
-serde = { version = "*", features = ["derive"] }
-toml = "*"
+serde = { version = "1", features = ["derive"] }
+toml = "0.5.9"
+
+warp = "0.3.2"
+futures-util = "0.3.21"
 
 birdseye-common = { path = "../birdseye-common" }

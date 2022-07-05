@@ -3,3 +3,5 @@
 /server-ext.cnf
 /server.toml
 /monitor.toml
+/.idea
+/birdseye-frontend/dist
