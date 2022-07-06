@@ -2,6 +2,7 @@ mod components;
 mod router;
 
 use router::*;
+use wasm_bindgen::prelude::*;
 use yew::prelude::*;
 use yew_router::prelude::*;
 
@@ -22,6 +23,7 @@ fn app() -> Html {
     }
 }
 
-fn main() {
+#[wasm_bindgen(start)]
+pub fn main() {
     yew::start_app::<App>();
 }

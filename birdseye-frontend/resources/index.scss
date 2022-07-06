@@ -1,0 +1,51 @@
+* {
+  box-sizing: border-box;
+  margin: 0;
+}
+
+body {
+  font-family: "Open Sans", sans-serif;
+
+  min-height: 100vh;
+  width: 100vw;
+  max-width: 100%;
+
+  display: flex;
+  flex-direction: column;
+}
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  font-family: "Roboto", sans-serif;
+}
+
+header {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100vw;
+  padding: 3rem;
+  box-shadow: grey 0 0 10px;
+
+  h1 {
+    font-weight: bolder;
+    font-size: 30pt;
+  }
+
+  margin-bottom: 1rem;
+}
+
+.com-not-found {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100%;
+  flex-direction: column;
+
+  flex: flex-grow;
+  text-align: center;
+}

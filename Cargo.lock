@@ -94,6 +94,7 @@ version = "0.1.0"
 dependencies = [
  "birdseye-common",
  "futures-util",
+ "listenfd",
  "serde",
  "tokio",
  "toml",
@@ -831,6 +832,17 @@ name = "libc"
 version = "0.2.125"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "5916d2ae698f6de9bfb891ad7a8d65c09d232dc58cc4ac433c7da3b2fd84bc2b"
+
+[[package]]
+name = "listenfd"
+version = "1.0.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "14e4fcc00ff6731d94b70e16e71f43bda62883461f31230742e3bc6dddf12988"
+dependencies = [
+ "libc",
+ "uuid",
+ "winapi 0.3.9",
+]
 
 [[package]]
 name = "log"
@@ -1705,6 +1717,12 @@ name = "utf8-width"
 version = "0.1.6"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "5190c9442dcdaf0ddd50f37420417d219ae5261bbf5db120d0f9bab996c9cba1"
+
+[[package]]
+name = "uuid"
+version = "1.1.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "dd6469f4314d5f1ffec476e05f17cc9a78bc7a27a6a857842170bdf8d6f98d2f"
 
 [[package]]
 name = "valuable"
