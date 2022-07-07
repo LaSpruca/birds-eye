@@ -1,10 +1,9 @@
 mod config;
 
-use std::{convert::Infallible, fs::read_to_string};
+use std::convert::Infallible;
 
 use crate::config::load_config;
 use futures_util::{FutureExt, StreamExt};
-use listenfd::ListenFd;
 use warp::{
     hyper::{self, Server},
     Filter,
@@ -13,11 +12,15 @@ use warp::{
 #[tokio::main]
 #[cfg(debug_assertions)]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
+    use std::net::SocketAddr;
+
+    use tracing::info;
+
     tracing_subscriber::fmt::fmt()
         .with_env_filter("debug,rustls=info")
         .init();
 
-    let _config = load_config();
+    let config = load_config();
 
     let ws_route = warp::get()
         .and(warp::path("echo"))
@@ -35,29 +38,30 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             })
         });
 
-    let files = warp::path("static").and(warp::fs::dir("birdseye-frontend/static"));
-    let read = warp::get().and(warp::fs::file("birdseye-frontend/resources/index.html"));
+    let files = warp::path("static")
+        .and(warp::fs::dir(config.be_server.static_path.clone()))
+        .with(warp::log("fs"));
 
-    let routes = ws_route.or(files).or(read);
+    let mut index_file = config.be_server.static_path.clone();
+    index_file.push("index.html");
 
-    let svc = warp::service(routes.clone());
+    let front_end = warp::get()
+        .and(warp::fs::file(index_file))
+        .with(warp::log("front-end"));
 
-    let make_svc = hyper::service::make_service_fn(|_: _| {
-        let svc = svc.clone();
-        async move { Ok::<_, Infallible>(svc) }
-    });
+    let routes = ws_route.with(warp::log("WS")).or(files).or(front_end);
 
-    let mut listenfd = ListenFd::from_env();
+    let server_addr = format!("{}:{}", &config.be_server.host, config.be_server.port);
+    let server_addr: SocketAddr = server_addr.parse().unwrap();
 
-    let server = if let Some(l) = listenfd.take_tcp_listener(0).unwrap() {
-        Server::from_tcp(l).unwrap()
-    } else {
-        Server::bind(&([127, 0, 0, 1], 3030).into())
-    };
+    warp::serve(routes)
+        .tls()
+        .key_path(config.be_server.key)
+        .cert_path(config.be_server.cert)
+        .run(server_addr)
+        .await;
 
-    server.serve(make_svc).await.unwrap();
-
-    warp::serve(routes).run(([127, 0, 0, 1], 3030)).await;
+    info!("Server is vaish");
 
     Ok(())
 }

@@ -21,6 +21,7 @@ pub struct ServerConfig {
     pub cert: PathBuf,
     pub host: String,
     pub port: u16,
+    pub static_path: PathBuf,
 }
 
 impl ServerConfig {
@@ -69,6 +70,7 @@ impl Default for ServerConfig {
             cert: "".into(),
             port: 42069,
             host: "127.0.0.1".into(),
+            static_path: "static".into(),
         }
     }
 }
