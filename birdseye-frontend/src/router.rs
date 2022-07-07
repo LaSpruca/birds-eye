@@ -6,6 +6,8 @@ use yew_router::prelude::*;
 pub enum Route {
     #[at("/")]
     Home,
+    #[at("/static/index.html")]
+    Index,
 
     #[not_found]
     #[at("/404")]
@@ -15,6 +17,6 @@ pub enum Route {
 pub fn switch(route: &Route) -> Html {
     match route {
         Route::NotFound => html! {<NotFound />},
-        Route::Home => html! {<Home />},
+        Route::Home | Route::Index => html! {<Home />},
     }
 }

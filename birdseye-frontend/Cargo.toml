@@ -9,16 +9,28 @@ edition = "2021"
 crate-type = ["cdylib", "rlib"]
 
 [dependencies]
-wasm-bindgen-futures = "0.4.31"
+# Mics
+log = "0.4.17"
+futures = "0.3.21"
+serde = { version = "1", features = ["derive"] }
+bincode = "1"
+birdseye-common = { path = "../birdseye-common", features = ["frontend"] }
+
+# Yew
 yew = "^0.19"
 yew-router = "0.16"
-wasm-logger = "0.2.0"
-log = "0.4.17"
-gloo = "0.8.0"
-futures = "0.3.21"
-wasm-bindgen = "0.2.81"
-wee_alloc = "0.4.5"
+yew-agent = "*"
 
+# WASM
+wasm-bindgen = "0.2.81"
+wasm-logger = "0.2.0"
+wasm-bindgen-futures = "0.4.31"
+wee_alloc = "0.4.5"
+gloo = "0.8.0"
+js-sys = "*"
 [dependencies.web-sys]
 version = "0.3.22"
 features = ["Event", "EventTarget"]
+
+[package.metadata.wasm-pack.profile.dev]
+wasm-opt = false

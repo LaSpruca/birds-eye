@@ -1,3 +1,8 @@
+#[cfg(feature = "backend")]
+pub mod backend;
+#[cfg(feature = "frontend")]
+pub mod frontend;
+
 use serde::Serialize;
 
 #[derive(Debug, Serialize, Clone)]
@@ -11,10 +16,11 @@ impl User {
     }
 
     pub fn new(name: &str) -> Self {
-        Self { name: name.to_string() }
+        Self {
+            name: name.to_string(),
+        }
     }
 }
-
 
 /// Serializable process struct to describe process used inside of crate
 #[derive(Clone, Serialize, Debug)]
@@ -38,6 +44,10 @@ impl<'a> Process {
     }
 
     pub fn new(pid: u32, name: &str, user: &User) -> Self {
-        Self { pid, name: name.to_string(), user: user.clone() }
+        Self {
+            pid,
+            name: name.to_string(),
+            user: user.clone(),
+        }
     }
 }

@@ -6,7 +6,9 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-serde = {version = "1", features = ["derive"]}
-yew = {git = "https://github.com/yewstack/yew", rev = "54de041", features = ["ssr", "tokio"]}
-tokio = {version = "^1.19", features = ["macros", "rt-multi-thread"]}
-warp = "0.3.2"
+serde = { version = "1", features = ["derive"] }
+
+[features]
+backend = []
+full = ["frontend", "backend"]
+frontend = []

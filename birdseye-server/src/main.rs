@@ -14,7 +14,7 @@ use warp::{
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
     use std::net::SocketAddr;
 
-    use tracing::info;
+    use tracing::{error, info};
 
     tracing_subscriber::fmt::fmt()
         .with_env_filter("debug,rustls=info")
@@ -23,7 +23,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let config = load_config();
 
     let ws_route = warp::get()
-        .and(warp::path("echo"))
+        .and(warp::path("dashboard"))
         .and(warp::ws())
         .map(|ws: warp::ws::Ws| {
             // And then our closure will be called when it completes...
@@ -32,7 +32,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                 let (tx, rx) = websocket.split();
                 rx.forward(tx).map(|result| {
                     if let Err(e) = result {
-                        eprintln!("websocket error: {:?}", e);
+                        error!("websocket error: {:?}", e);
                     }
                 })
             })
