@@ -14,7 +14,7 @@ tracing-subscriber = { version = "0.3.14", features = ["env-filter"] }
 serde = { version = "1", features = ["derive"] }
 toml = "0.5.9"
 
-warp = { version = "0.3.2", features = ["tls"] }
+warp = { version = "0.3.2", features = ["tls", "compression"] }
 futures-util = "0.3.21"
 
 birdseye-common = { path = "../birdseye-common", features = ["full"] }

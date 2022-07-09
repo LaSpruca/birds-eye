@@ -1,13 +1,8 @@
 mod config;
 
-use std::convert::Infallible;
-
 use crate::config::load_config;
 use futures_util::{FutureExt, StreamExt};
-use warp::{
-    hyper::{self, Server},
-    Filter,
-};
+use warp::Filter;
 
 #[tokio::main]
 #[cfg(debug_assertions)]
@@ -17,7 +12,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     use tracing::{error, info};
 
     tracing_subscriber::fmt::fmt()
-        .with_env_filter("debug,rustls=info")
+        .with_env_filter("debug,h2=info")
         .init();
 
     let config = load_config();
@@ -40,7 +35,8 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     let files = warp::path("static")
         .and(warp::fs::dir(config.be_server.static_path.clone()))
-        .with(warp::log("fs"));
+        .with(warp::log("Static Files"))
+        .with(warp::compression::gzip());
 
     let mut index_file = config.be_server.static_path.clone();
     index_file.push("index.html");
@@ -49,7 +45,10 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         .and(warp::fs::file(index_file))
         .with(warp::log("front-end"));
 
-    let routes = ws_route.with(warp::log("WS")).or(files).or(front_end);
+    let routes = ws_route
+        .with(warp::log("Frontend Webscoket"))
+        .or(files)
+        .or(front_end);
 
     let server_addr = format!("{}:{}", &config.be_server.host, config.be_server.port);
     let server_addr: SocketAddr = server_addr.parse().unwrap();

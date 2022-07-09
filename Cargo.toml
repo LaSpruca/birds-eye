@@ -4,6 +4,7 @@ members = [
     "birdseye-server",
     "birdseye-common",
     "birdseye-frontend",
+    "birdseye-runner",
 ]
 
 [profile.release]
